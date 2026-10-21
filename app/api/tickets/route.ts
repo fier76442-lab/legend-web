@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     if (conversationId) {
       if (!/^\d{17,20}$/.test(conversationId)) return NextResponse.json({ message: 'Invalid ticket.' }, { status: 400 });
       const logMessage: any = await discord(`/channels/${LOG_CHANNEL}/messages/${conversationId}`, token);
-      const ticketEmbed = (logMessage.embeds || []).find((e: any) => String(e.title || '').startsWith('Ticket •'));
+      const ticketEmbed = (logMessage.embeds || []).find((e: any) => String(e.title || '').startsWith('Ticket â€¢'));
       if (!ticketEmbed) return NextResponse.json({ message: 'Ticket not found.' }, { status: 404 });
       const footer = String(ticketEmbed.footer?.text || '');
       const ownerId = footer.match(/opened_by=(\d{17,20})/)?.[1] || '';
@@ -60,8 +60,10 @@ export async function GET(req: Request) {
         const attributedId = websiteReply?.[1] || openedBy?.[1];
         if (attributedId) {
           authorId = attributedId;
-          content = content.replace(websiteReply || openedBy, '').trim();
+          content = content.replace(websiteReply?.[0] || openedBy?.[0] || '', '').trim();
           try {
+            const guild = process.env.DISCORD_GUILD_ID || process.env.GUILD_ID || process.env.DISCORD_SERVER_ID || "";
+            if (!guild) throw new Error('Missing Discord guild ID');
             const profile: any = await discord(`/guilds/${guild}/members/${attributedId}`, token);
             author = profile.nick || profile.user?.global_name || profile.user?.username || 'Discord User';
           } catch { author = 'Discord User'; }
@@ -75,9 +77,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ messages: conversation, threadId, isStaff, ownerId });
     }
     const messages: any = await discord(`/channels/${LOG_CHANNEL}/messages?limit=50`, token);
-    const tickets = (messages || []).filter((m: any) => (m.embeds || []).some((e: any) => String(e.title || '').startsWith('Ticket •')))
+    const tickets = (messages || []).filter((m: any) => (m.embeds || []).some((e: any) => String(e.title || '').startsWith('Ticket â€¢')))
       .map((m: any) => {
-        const e = m.embeds.find((x: any) => String(x.title || '').startsWith('Ticket •'));
+        const e = m.embeds.find((x: any) => String(x.title || '').startsWith('Ticket â€¢'));
         const footer = String(e.footer?.text || '');
         const threadId = footer.match(/thread_id=(\d{17,20})/)?.[1] || '';
         return { id: m.id, threadId, title: String(e.title || 'Ticket'), description: String(e.description || ''),
@@ -104,14 +106,14 @@ export async function POST(req: Request) {
       // Enforce the three-open-ticket limit on the server.
       const recent: any = await discord(`/channels/${LOG_CHANNEL}/messages?limit=100`, token);
       const openCount = (recent || []).filter((msg: any) => {
-        const embed = (msg.embeds || []).find((e: any) => String(e.title || '').startsWith('Ticket •'));
+        const embed = (msg.embeds || []).find((e: any) => String(e.title || '').startsWith('Ticket â€¢'));
         if (!embed) return false;
         const footer = String(embed.footer?.text || '');
         return footer.includes(`opened_by=${id}`) && /(?:^|;\s*)status=open(?:;|$)/.test(footer);
       }).length;
       if (openCount >= 3) return NextResponse.json({ message: 'You already have 3 open tickets. Wait for staff to close one before opening another.' }, { status: 429 });
       const channelMessage: any = await discord(`/channels/${LOG_CHANNEL}/messages`, token, 'POST', { embeds: [{
-        title: `Ticket • ${type}`, description: `**Opened By**\n<@${id}>\n\n**Claimed**\nNo · Waiting for staff\n\n**Description**\n${details}`,
+        title: `Ticket â€¢ ${type}`, description: `**Opened By**\n<@${id}>\n\n**Claimed**\nNo Â· Waiting for staff\n\n**Description**\n${details}`,
         fields: [{ name: 'Subject', value: subject.slice(0, 1024), inline: false }, { name: 'Claimed', value: 'No', inline: true }, { name: 'Status', value: 'OPEN', inline: true }],
         color: 15548997, timestamp: new Date().toISOString(), footer: { text: `status=open; opened_by=${id}` }
       }] });
@@ -119,7 +121,7 @@ export async function POST(req: Request) {
       try {
         thread = await discord(`/channels/${LOG_CHANNEL}/messages/${channelMessage.id}/threads`, token, 'POST', { name: `ticket-${type.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0,35)}-${id.slice(-4)}`, auto_archive_duration: 1440 });
         await discord(`/channels/${thread.id}/messages`, token, 'POST', { content: `**Ticket opened by <@${id}>**\n**Subject:** ${subject}\n**Department:** ${type}\n\n${details}` });
-        const e = channelMessage.embeds?.[0] || { title: `Ticket • ${type}`, description: subject, color: 15548997 };
+        const e = channelMessage.embeds?.[0] || { title: `Ticket â€¢ ${type}`, description: subject, color: 15548997 };
         e.footer = { text: `status=open; opened_by=${id}; thread_id=${thread.id}; replies=0` };
         await discord(`/channels/${LOG_CHANNEL}/messages/${channelMessage.id}`, token, 'PATCH', { embeds: [e] });
       } catch (err) { console.error('[TICKET THREAD]', err); }
@@ -128,7 +130,7 @@ export async function POST(req: Request) {
     const ticketId = String(data.ticketId || ''), threadId = String(data.threadId || '');
     if (!/^\d{17,20}$/.test(ticketId)) return NextResponse.json({ message: 'Invalid ticket.' }, { status: 400 });
     const original: any = await discord(`/channels/${LOG_CHANNEL}/messages/${ticketId}`, token);
-    const embed = original.embeds?.find((e: any) => String(e.title || '').startsWith('Ticket •'));
+    const embed = original.embeds?.find((e: any) => String(e.title || '').startsWith('Ticket â€¢'));
     if (!embed) return NextResponse.json({ message: 'Ticket not found.' }, { status: 404 });
     const oldFooter = String(embed.footer?.text || '');
     const ownerId = oldFooter.match(/opened_by=(\d{17,20})/)?.[1] || '';
@@ -138,7 +140,7 @@ export async function POST(req: Request) {
     const actualThread = threadId || oldFooter.match(/thread_id=(\d{17,20})/)?.[1] || '';
     if (action === 'claim') {
       if (!actualThread) throw new Error('Ticket thread is missing. Check bot permissions.');
-      await discord(`/channels/${actualThread}/messages`, token, 'POST', { content: `🟡 Ticket claimed by <@${id}>.` });
+      await discord(`/channels/${actualThread}/messages`, token, 'POST', { content: `ðŸŸ¡ Ticket claimed by <@${id}>.` });
       embed.footer = { text: oldFooter.replace(/claimed_by=\d{17,20}/, '').replace(/; ?$/, '') + `; claimed_by=${id}` };
       embed.description = String(embed.description || '').replace(/\*\*Claimed\*\*\n[^\n]+/, `**Claimed**\n<@${id}>`);
       embed.fields = (embed.fields || []).map((f: any) => f.name === 'Claimed' ? { ...f, value: `<@${id}>` } : f);
@@ -150,7 +152,7 @@ export async function POST(req: Request) {
       if (uploadedFile) {
         if (uploadedFile.size > 8 * 1024 * 1024) return NextResponse.json({ message: 'File must be 8 MB or smaller.' }, { status: 413 });
         const form = new FormData();
-        form.set('payload_json', JSON.stringify({ content: `**Website reply from <@${id}>:**\n${message || `📎 ${uploadedFile.name}`}` }));
+        form.set('payload_json', JSON.stringify({ content: `**Website reply from <@${id}>:**\n${message || `ðŸ“Ž ${uploadedFile.name}`}` }));
         form.set('files[0]', uploadedFile, uploadedFile.name);
         const upload = await fetch(`https://discord.com/api/v10/channels/${actualThread}/messages`, { method: 'POST', headers: { Authorization: `Bot ${token}` }, body: form, cache: 'no-store' });
         if (!upload.ok) throw new Error(`Discord file upload failed (${upload.status}): ${await upload.text()}`);
@@ -165,7 +167,7 @@ export async function POST(req: Request) {
       if (actualThread) {
         await discord(`/channels/${actualThread}`, token, 'PATCH', { archived: closing, locked: closing });
         if (!closing) await discord(`/channels/${actualThread}`, token, 'PATCH', { archived: false, locked: false });
-        else await discord(`/channels/${actualThread}/messages`, token, 'POST', { content: `🔒 Ticket closed by <@${id}>.` }).catch(() => null);
+        else await discord(`/channels/${actualThread}/messages`, token, 'POST', { content: `ðŸ”’ Ticket closed by <@${id}>.` }).catch(() => null);
       }
       if (closing) {
         // Closing removes the ticket from the active queue and deletes its thread.
@@ -188,3 +190,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: e.message || 'Ticket action failed.' }, { status: e.status || 500 });
   }
 }
+
+
+
