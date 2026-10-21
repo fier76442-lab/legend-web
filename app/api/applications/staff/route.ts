@@ -1,4 +1,4 @@
-import {NextResponse} from 'next/server';
+﻿import {NextResponse} from 'next/server';
 import {cookies} from 'next/headers';
 import {jwtVerify} from 'jose';
 import {discordCreateMessage} from '@/lib/discord';
@@ -9,7 +9,7 @@ export async function POST(req:Request){
   const secret=process.env.SESSION_SECRET;
   const session=(await cookies()).get('legend_discord_session')?.value;
   if(!secret||!session) return NextResponse.json({message:'Connect your Discord account before submitting the application.'},{status:401});
-  const {payload}=await jwtVerify(session,new TextEncoder().encode(secret));
+  const {payload: sessionPayload}=await jwtVerify(session,new TextEncoder().encode(secret));
   const applicantId=String(payload.discordId||'');
   if(!/^\d{17,20}$/.test(applicantId)) return NextResponse.json({message:'Discord account could not be identified.'},{status:401});
   const lines=Object.entries(data).map(([k,v])=>`**${k}:** ${String(v).slice(0,900)}`).join('\n');
