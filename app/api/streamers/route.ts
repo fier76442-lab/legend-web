@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 const STREAMER_ROLE_ID = '1559254039797964871';
 type Member = { user: { id: string; username: string; global_name?: string | null; avatar?: string | null }; nick?: string | null; roles: string[] };
@@ -25,7 +25,7 @@ export async function GET() {
       displayName: member.nick || member.user.global_name || member.user.username,
       avatar: member.user.avatar
         ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.${member.user.avatar.startsWith('a_') ? 'gif' : 'png'}?size=256`
-        : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(member.user.id) % 5n)}.png`,
+        : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(member.user.id) % BigInt(5))}.png`,
     }));
     streamers.sort((a, b) => a.displayName.localeCompare(b.displayName));
     return NextResponse.json({ streamers }, { headers: { 'Cache-Control': 'no-store' } });
