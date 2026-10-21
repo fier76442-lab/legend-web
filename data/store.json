@@ -1,0 +1,18 @@
+[
+  {
+    "id": "4412a687-b23e-422b-8dd9-a719b41883df",
+    "name": "BMW",
+    "category": "Cars",
+    "description": ".",
+    "price": "60",
+    "image": "/uploads/6e9f3e06-107f-4a84-8f9a-cdc6b5e09e23.png"
+  },
+  {
+    "id": "2ba479c9-4e7e-4f93-ab5a-42322daf8880",
+    "name": "Merecedes-(Moment)",
+    "category": "Cars",
+    "description": ".",
+    "price": "60",
+    "image": "/uploads/f92d8fae-2892-4145-8ed9-466b280d9b6f.png"
+  }
+]
