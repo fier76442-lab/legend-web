@@ -10,7 +10,7 @@ export async function POST(req:Request){
   const session=(await cookies()).get('legend_discord_session')?.value;
   if(!secret||!session) return NextResponse.json({message:'Connect your Discord account before submitting the application.'},{status:401});
   const {payload: sessionPayload}=await jwtVerify(session,new TextEncoder().encode(secret));
-  const applicantId=String(payload.discordId||'');
+  const applicantId=String(sessionPayload.discordId||'');
   if(!/^\d{17,20}$/.test(applicantId)) return NextResponse.json({message:'Discord account could not be identified.'},{status:401});
   const lines=Object.entries(data).map(([k,v])=>`**${k}:** ${String(v).slice(0,900)}`).join('\n');
   const channel=process.env.DISCORD_STAFF_REVIEW_CHANNEL_ID;
@@ -20,3 +20,5 @@ export async function POST(req:Request){
   return NextResponse.json({message:'Application submitted successfully.'});
  }catch(e){return NextResponse.json({message:e instanceof Error?e.message:'Failed to submit application.'},{status:500})}
 }
+
+
