@@ -1,5 +1,5 @@
 {
-  "name": "legend-roleplay",
+  "name": "DarkCity roleplay",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -8,8 +8,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "discord.js": "^14.27.0",
+    "dotenv": "^18.0.9",
     "jose": "^6.1.0",
-    "next": "16.4.0",
+    "next": "^16.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

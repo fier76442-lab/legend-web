@@ -1,4 +1,4 @@
-LEGEND ROLE PLAY — VIDEO BACKGROUND
+DarkCity ROLE PLAY — VIDEO BACKGROUND
 
 The site uses /public/hero-background.mp4 as the first-choice background video and loops it behind all pages.
 To make the video independent of the expiring Discord CDN URL, save your original MP4 file as:

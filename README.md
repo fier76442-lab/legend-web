@@ -1,6 +1,6 @@
-# Legend RolePlay
+﻿# DarkCity RolePLay
 
-Next.js website starter for Legend RolePlay.
+Next.js website starter for DarkCity RolePLay.
 
 ## Run
 1. Install Node.js 20+.
@@ -16,22 +16,22 @@ The website UI, pages, rules, role IDs, application forms and Discord submission
 The Accept/Denied interaction bot and Discord OAuth2 session layer are intentionally separated in `discord-bot/` so secrets are not hard-coded. Add your Discord bot token and configure the review/result channels in `.env` before using the application workflow in production.
 
 Gallery channel:
-1552414400894210149
+1562847937199865957
 
 Whitelist review/result:
-1552413863880818779 / 1552413852313067602
+1562847753959243826 / 1562847791053545492
 
 Staff review/result:
-1553161152337551450 / 1552414631585255444
+1562848566756507741 / 1562847887497633893
 
 ## Discord Staff + Connect to Discord
 Set these variables in the root `.env`:
-- `DISCORD_BOT_TOKEN` = your Discord bot token (keep secret)
-- `DISCORD_GUILD_ID` = your Legend RolePlay server ID
-- `DISCORD_CLIENT_ID` = Discord application client ID
-- `DISCORD_CLIENT_SECRET` = Discord OAuth2 client secret (keep secret)
+- `DISCORD_BOT_TOKEN` = YOUR_BOT_TOKEN
+- `DISCORD_GUILD_ID` = 1460684018650452142
+- `DISCORD_CLIENT_ID` = 1562859116152758342
+- `DISCORD_CLIENT_SECRET` = YOUR_CLIENT_SECRET
 - `DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback`
-- `SESSION_SECRET` = long random secret
+- `SESSION_SECRET` = YOUR_RANDOM_SECRET
 
 The Staff page reads current Discord guild members using the bot token and displays members who have one of the configured staff role IDs. The Staff page also includes a Connect to Discord OAuth2 button.
 In the Discord Developer Portal, add the exact redirect URL above under OAuth2 Redirects and make sure the bot is in the guild. For member listing, enable the Server Members Intent for the bot if Discord requires it for your guild/member access.
@@ -75,3 +75,4 @@ In the Discord Developer Portal, add the exact redirect URL above under OAuth2 R
 ## Local development (website + Discord application buttons)
 
 Run the website from the project root with `npm run dev`. The Discord button/modal handler is a separate process: open a second terminal, run `cd discord-bot`, `npm install`, then `npm start`. Ensure the bot folder has a `.env` containing `DISCORD_BOT_TOKEN` and the review/result channel IDs. The website `.env` and the bot `.env` are separate unless you deliberately configure them otherwise.
+

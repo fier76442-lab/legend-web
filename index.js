@@ -125,6 +125,6 @@ client.on('voiceStateUpdate',(oldS,newS)=>{
  audit(title,desc,0x5865F2); if(oldS.channelId&&!newS.channelId) audit('Voice Disconnect',`${u} disconnected from voice <#${oldS.channelId}>.`,0x5865F2);
 });
 
-client.once('ready',()=>console.log(`Legend RolePlay bot online as ${client.user.tag}`));
+client.once('ready',()=>console.log(`DarkCity RolePlay bot online as ${client.user.tag}`));
 if (!token) { console.error('[STARTUP] DISCORD_BOT_TOKEN is missing. Add it to the bot environment/.env file.'); }
 else client.login(token).catch(error => console.error('[STARTUP] Discord login failed:', error.message));

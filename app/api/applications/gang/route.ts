@@ -24,22 +24,22 @@ export async function POST(req: Request) {
     const requester = await fetch(`https://discord.com/api/v10/guilds/${guild}/members/${applicantId}`, { headers: { Authorization: `Bot ${token}` }, cache: 'no-store' });
     if (!requester.ok) return NextResponse.json({ message: 'Your Discord account must be a member of the server.' }, { status: 403 });
     const requesterMember = await requester.json();
-    const whitelistRole = process.env.DISCORD_WHITELISTED_ROLE_ID;
-    if (whitelistRole && !(requesterMember.roles || []).includes(whitelistRole)) return NextResponse.json({ message: 'Whitelist is required before applying for a gang.' }, { status: 403 });
+    const whitelistRoles = [process.env.DISCORD_WHITELISTED_ROLE_ID || '1562845857215291524', '1562845861061599372'];
+    if (!whitelistRoles.some(role => (requesterMember.roles || []).includes(role))) return NextResponse.json({ message: 'Whitelist is required before applying for a gang.' }, { status: 403 });
     const verified: string[] = [];
     for (const id of memberIds) {
       const response = await fetch(`https://discord.com/api/v10/guilds/${guild}/members/${id}`, { headers: { Authorization: `Bot ${token}` }, cache: 'no-store' });
       if (response.ok) verified.push(id);
     }
     if (verified.length < 8) return NextResponse.json({ message: `Only ${verified.length}/8 members could be verified in the Discord server. Check the IDs and try again.` }, { status: 400 });
-    const channel = process.env.DISCORD_GANG_REVIEW_CHANNEL_ID || process.env.DISCORD_STAFF_REVIEW_CHANNEL_ID;
+    const channel = process.env.DISCORD_GANG_REVIEW_CHANNEL_ID || '1563168427651244063';
     if (!channel) return NextResponse.json({ message: 'Gang review channel is not configured. Set DISCORD_GANG_REVIEW_CHANNEL_ID in .env.' }, { status: 500 });
     const memberMentions = verified.map(id => `<@${id}>`).join(', ');
     const color2 = data.twoColors && /^#[0-9a-fA-F]{6}$/.test(String(data.secondColor)) ? String(data.secondColor) : '';
-    await discordCreateMessage(channel, { embeds: [{ title: 'New Gang & Family Application', color: parseInt(color.slice(1), 16), description: [
+    await discordCreateMessage(channel, { content: `<@&1562845631309942845> • New gang application from <@${applicantId}>`, allowed_mentions: { roles: ['1562845631309942845'], users: [applicantId] }, components: [{ type: 1, components: [{ type: 2, style: 3, label: 'Accept', custom_id: `application:gang:accept:${applicantId}` }, { type: 2, style: 4, label: 'Denied', custom_id: `application:gang:deny:${applicantId}` }] }], embeds: [{ title: 'New Gang & Family Application', color: parseInt(color.slice(1), 16), description: [
       `**Applicant:** <@${applicantId}> (\`${applicantId}\`)`, `**Gang name:** ${gangName}`, `**Accent color:** ${color}${color2 ? ` / ${color2}` : ''}`, `**Verified members (${verified.length}):** ${memberMentions}`,
       `**Origin story:**\n${originStory}`, `**Objective:**\n${objective}`, '**Rules accepted:** Yes',
-    ].join('\n\n').slice(0, 5900), timestamp: new Date().toISOString(), footer: { text: `gang_application; applicant=${applicantId}` } }] });
+    ].join('\n\n').slice(0, 5900), timestamp: new Date().toISOString(), footer: { text: `gang; applicant=${applicantId}` } }] });
     return NextResponse.json({ message: `Gang application submitted successfully. ${verified.length} Discord members verified; staff have been notified.` });
   } catch (error) {
     console.error('[GANG APPLICATION]', error);

@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from 'next/server';
 
-const STREAMER_ROLE_ID = '1559254039797964871';
+const STREAMER_ROLE_ID = '1562845705972744233';
 type Member = { user: { id: string; username: string; global_name?: string | null; avatar?: string | null }; nick?: string | null; roles: string[] };
 export async function GET() {
   try {
