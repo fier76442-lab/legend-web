@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
@@ -18,25 +19,15 @@ const ROLE_IDS = {
   pcChecker: '1562845668303704074',
   whitelister: '1562845673311965354',
   supportTeam: '1562845680857251943',
-
-  staff: [
-    '1562845546853441556', // Owner
-    '1562845556337016952', // Co Owner
-    '1562845563525926952', // Supervisor
-    '1562845571662745601', // Server Manager
-    '1562845567611310130', // Developer
-    '1562845588637225123', // Head Admin
-    '1562845634736824420', // Head Checker
-    '1562845638884855818', // Head Whitelister
-    '1562845660640841729', // Admin
-    '1562875050971893900', // Trial Admin
-    '1562845664042553477', // Moderator
-    '1562874969162256490', // Trial Moderator
-    '1562845668303704074', // PC Checker
-    '1562845673311965354', // Whitelister
-    '1562845680857251943', // Support Team
-  ],
 };
+
+const STAFF_ROLE_IDS = Object.values(ROLE_IDS);
+
+const LEADERSHIP_ROLE_IDS = [
+  ROLE_IDS.owner,
+  ROLE_IDS.coOwner,
+  ROLE_IDS.developer,
+];
 
 export async function GET(request: Request) {
   try {
@@ -74,43 +65,52 @@ export async function GET(request: Request) {
       );
     }
 
-    const r = await fetch(
+    const response = await fetch(
       `https://discord.com/api/v10/guilds/${guild}/members/${id}`,
       {
-        headers: { Authorization: `Bot ${token}` },
+        headers: {
+          Authorization: `Bot ${token}`,
+        },
         cache: 'no-store',
       }
     );
 
-    if (!r.ok) {
-      console.error('[STAFF ACCESS] Discord API status:', r.status);
+    if (!response.ok) {
+      console.error(
+        '[STAFF ACCESS] Discord API status:',
+        response.status
+      );
 
       return NextResponse.json(
         {
           allowed: false,
           leadership: false,
-          reason: 'Could not verify your Discord roles.',
+          reason:
+            response.status === 404
+              ? 'You are not a member of the configured Discord server.'
+              : response.status === 429
+                ? 'Discord is rate-limiting requests. Please try again shortly.'
+                : 'Could not verify your Discord roles.',
         },
-        { status: 403 }
+        { status: response.status === 429 ? 429 : 403 }
       );
     }
 
-    const member = await r.json();
+    const member = await response.json();
     const roles: string[] = Array.isArray(member.roles)
       ? member.roles
       : [];
 
-    const leadership = [
-      ROLE_IDS.owner,
-      ROLE_IDS.coOwner,
-      ROLE_IDS.developer,
-    ].some((role) => roles.includes(role));
+    const extraWhitelisterRole =
+      process.env.DISCORD_WHITELISTER_ROLE_ID || '';
 
-    const allowed = roles.some(
-      (role) =>
-        ROLE_IDS.staff.includes(role) ||
-        role === (process.env.DISCORD_WHITELISTER_ROLE_ID || '')
+    const leadership = roles.some((role) =>
+      LEADERSHIP_ROLE_IDS.includes(role)
     );
+
+    const allowed =
+      roles.some((role) => STAFF_ROLE_IDS.includes(role)) ||
+      (!!extraWhitelisterRole && roles.includes(extraWhitelisterRole));
 
     const scope = new URL(request.url).searchParams.get('scope');
 
@@ -126,8 +126,21 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      { allowed, leadership, discordId: id },
-      { status: allowed ? 200 : 403 }
+      {
+        allowed: scope === 'leadership' ? leadership : allowed,
+        leadership,
+        discordId: id,
+      },
+      {
+        status:
+          scope === 'leadership'
+            ? leadership
+              ? 200
+              : 403
+            : allowed
+              ? 200
+              : 403,
+      }
     );
   } catch (error) {
     console.error('[STAFF ACCESS]', error);
